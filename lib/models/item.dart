@@ -1,41 +1,58 @@
 class Item {
-  final int id;
+  final String id;
   final String title;
-  final String? summary;
-  final String url;
-  final String? imageUrl;
-  final String? publishedAt;
-  final String menu; // articles, blogs, reports
+  final String? description;
+  final String? city;
+  final String? pictureId;
+  final double? rating;
+  final String menu;
+  final String? address;
+  final List<String> categories;
 
   Item({
     required this.id,
     required this.title,
-    required this.url,
-    this.summary,
-    this.imageUrl,
-    this.publishedAt,
+    this.description,
+    this.city,
+    this.pictureId,
+    this.rating,
     required this.menu,
-  });
+    this.address,
+    this.categories = const [],
+  });  factory Item.fromJson(Map<String, dynamic> json, String menu) {
+    // Parsing categories - since API doesn't have categories field,
+    // we'll extract it from city as category (or leave empty for now)
+    List<String> parsedCategories = [];
+    
+    // Option 1: Use city as a pseudo-category
+    if (json.containsKey('city') && json['city'] != null) {
+      parsedCategories.add(json['city'].toString());
+    }
+    
+    print('DEBUG: Parsed item "${json['name']}" with categories: $parsedCategories');
 
-  factory Item.fromJson(Map<String, dynamic> json, String menu) {
     return Item(
-      id: json['id'] is int ? json['id'] as int : int.tryParse(json['id'].toString()) ?? 0,
-      title: json['title'] ?? json['name'] ?? 'No title',
-      summary: json['summary'] ?? json['description'] ?? '',
-      url: json['url'] ?? json['data'] ?? '',
-      imageUrl: json['image_url'] ?? json['imageUrl'] ?? json['image'],
-      publishedAt: json['published_at'] ?? json['publishedAt'],
+      id: json['id']?.toString() ?? '',
+      title: json['name'] ?? json['title'] ?? 'No name',
+      description: json['description'] ?? 'No description',
+      city: json['city'] ?? '',
+      address: json['address'] ?? 'No address',
+      pictureId: json['pictureId'],
+      rating: json['rating'] is num ? (json['rating'] as num).toDouble() : null,
       menu: menu,
+      categories: parsedCategories,
     );
   }
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'title': title,
-        'summary': summary,
-        'url': url,
-        'imageUrl': imageUrl,
-        'publishedAt': publishedAt,
+        'description': description,
+        'city': city,
+        'address': address,
+        'pictureId': pictureId,
+        'rating': rating,
         'menu': menu,
+        'categories': categories,
       };
 }

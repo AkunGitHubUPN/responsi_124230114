@@ -22,7 +22,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Responsi App',
-      theme: ThemeData(primarySwatch: Colors.blue),
+      theme: ThemeData(primarySwatch: Colors.deepOrange),
       home: initialUsername == null ? const LoginPage() : HomePage(username: initialUsername!),
     );
   }

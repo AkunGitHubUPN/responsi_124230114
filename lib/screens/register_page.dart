@@ -60,7 +60,7 @@ class _RegisterPageState extends State<RegisterPage> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _passCtrl,
-                decoration: const InputDecoration(labelText: 'Password'),
+                decoration: const InputDecoration(labelText: 'Password', focusColor: Colors.deepOrange,),
                 obscureText: true,
                 validator: (v) => (v == null || v.isEmpty) ? 'Enter password' : null,
               ),

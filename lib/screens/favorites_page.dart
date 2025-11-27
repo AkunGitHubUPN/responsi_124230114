@@ -62,10 +62,9 @@ class _FavoritesListViewState extends State<FavoritesListView> {
         return ListView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           itemCount: list.length,
-          itemBuilder: (context, index) {
-            final item = list[index];
+          itemBuilder: (context, index) {            final item = list[index];
             return Dismissible(
-              key: Key('${item.menu}-${item.id}'),
+              key: Key(item.id),
               direction: DismissDirection.horizontal,
               onDismissed: (dir) async {
                 final messenger = ScaffoldMessenger.of(context);
@@ -97,13 +96,20 @@ class _FavoritesListViewState extends State<FavoritesListView> {
                           width: 80,
                           height: 60,
                           color: Colors.grey.shade200,
-                          child: item.imageUrl != null && item.imageUrl!.isNotEmpty
-                              ? Image.network(item.imageUrl!, fit: BoxFit.cover)
-                              : const Icon(Icons.image, size: 32, color: Colors.grey),
+                          child: item.pictureId != null && item.pictureId!.isNotEmpty
+                              ? Image.network('https://restaurant-api.dicoding.dev/images/small/${item.pictureId}', fit: BoxFit.cover)
+                              : const Icon(Icons.restaurant, size: 32, color: Colors.grey),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          child: Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold), maxLines: 2, overflow: TextOverflow.ellipsis),
+                              const SizedBox(height: 4),
+                              Text(item.city ?? '', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                            ],
+                          ),
                         )
                       ],
                     ),

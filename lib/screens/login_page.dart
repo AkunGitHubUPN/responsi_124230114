@@ -49,10 +49,10 @@ class _LoginPageState extends State<LoginPage> {
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 36),
           child: Column(
             children: [
-              const SizedBox(height: 8),
-              Icon(Icons.rocket_launch, size: 80, color: Colors.deepPurple),
+              const SizedBox(height: 150),
+              Icon(Icons.restaurant_menu, size: 80, color: Colors.deepOrange),
               const SizedBox(height: 12),
-              Text('Welcome to My Spaceflight', style: theme.textTheme.titleMedium?.copyWith(fontSize: 18)),
+              Text('Welcome to My Restaurant App', style: theme.textTheme.titleMedium?.copyWith(fontSize: 18)),
               const SizedBox(height: 24),
 
               Container(
@@ -72,7 +72,7 @@ class _LoginPageState extends State<LoginPage> {
                           prefixIcon: const Icon(Icons.person_outline),
                           hintText: 'Username',
                           contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8),),
                         ),
                         validator: (v) => (v == null || v.isEmpty) ? 'Enter username' : null,
                       ),
@@ -92,24 +92,22 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         validator: (v) => (v == null || v.isEmpty) ? 'Enter password' : null,
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 50),
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: _login,
-                          style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple.shade100, elevation: 0, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30))),
-                          child: Text('Login', style: TextStyle(color: Colors.deepPurple.shade800)),
+                          style: ElevatedButton.styleFrom(backgroundColor: Colors.deepOrange, elevation: 0, padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30))),
+                          child: Text('Login', style: TextStyle(color: Colors.white)),
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
-
-              const SizedBox(height: 18),
               TextButton(
                 onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const RegisterPage())),
-                child: Text('Belum punya akun? Register', style: TextStyle(color: Colors.deepPurple.shade400)),
+                child: Text('Belum punya akun? Register', style: TextStyle(color: Colors.deepOrange)),
               ),
             ],
           ),

@@ -15,18 +15,19 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  String _menu = 'articles';
   late Future<List<Item>> _futureList;
+  late Future<List<String>> _futureCategories;
   int _selectedIndex = 0; // 0: feed, 1: favorites, 2: profile
+  String _selectedCategory = 'All'; // Filter kategori
 
-  // in-memory set of favorite keys 'menu-id'
+  // in-memory set of favorite keys 'id'
   final Set<String> _favKeys = {};
-
   @override
   void initState() {
     super.initState();
     _loadFavorites();
     _load();
+    _futureCategories = ApiService.fetchCategories();
   }
 
   Future<void> _loadFavorites() async {
@@ -34,13 +35,13 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _favKeys.clear();
       for (var f in favs) {
-        _favKeys.add('${f.menu}-${f.id}');
+        _favKeys.add(f.id);
       }
     });
   }
 
   void _load() {
-    _futureList = ApiService.fetchList(_menu);
+    _futureList = ApiService.fetchList('restaurants');
   }
 
   Future<void> _refresh() async {
@@ -49,23 +50,29 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  bool _isFav(Item item) => _favKeys.contains('${item.menu}-${item.id}');
+  bool _isFav(Item item) => _favKeys.contains(item.id);
 
   Future<void> _toggleFavorite(Item item) async {
     final messenger = ScaffoldMessenger.of(context);
-    final key = '${item.menu}-${item.id}';
-    if (_favKeys.contains(key)) {
-      await StorageService.removeFavorite(item.id, item.menu);
-      setState(() => _favKeys.remove(key));
+    if (_favKeys.contains(item.id)) {
+      await StorageService.removeFavorite(item.id, 'restaurants');
+      setState(() => _favKeys.remove(item.id));
       messenger.showSnackBar(const SnackBar(content: Text('Removed from favorites')));
     } else {
       await StorageService.addFavorite(item);
-      setState(() => _favKeys.add(key));
+      setState(() => _favKeys.add(item.id));
       messenger.showSnackBar(const SnackBar(content: Text('Added to favorites')));
     }
   }
-
-  Widget _buildFeed() {
+  // Filter restaurant berdasarkan kategori
+  List<Item> _filterByCategory(List<Item> restaurants) {
+    if (_selectedCategory == 'All') {
+      return restaurants;
+    }
+    return restaurants.where((item) {
+      return item.categories.any((cat) => cat == _selectedCategory);
+    }).toList();
+  }Widget _buildFeed() {
     return Column(
       children: [
         Padding(
@@ -75,14 +82,54 @@ class _HomePageState extends State<HomePage> {
             children: [
               Text('Selamat datang ${widget.username}', style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 8),
-              Row(
-                children: [
-                  _menuButton('articles', 'Articles'),
-                  const SizedBox(width: 8),
-                  _menuButton('blogs', 'Blogs'),
-                  const SizedBox(width: 8),
-                  _menuButton('reports', 'Reports'),
-                ],
+              Text('Cari Restoran Favorit Anda', style: TextStyle(color: Colors.grey.shade600)),              const SizedBox(height: 12),              // Category Filter Buttons
+              FutureBuilder<List<String>>(
+                future: _futureCategories,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const SizedBox(
+                      height: 40,
+                      child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                    );
+                  }
+                  if (snapshot.hasError) {
+                    print('Category error: ${snapshot.error}');
+                  }
+                  var categories = snapshot.data ?? ['All'];
+                  if (categories.isEmpty) {
+                    categories = ['All'];
+                  }
+                  
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: categories.map((category) {
+                        final isSelected = _selectedCategory == category;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: FilterChip(
+                            label: Text(category),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              setState(() {
+                                _selectedCategory = category;
+                              });
+                            },
+                            backgroundColor: Colors.white,
+                            selectedColor: Colors.deepOrange.shade100,
+                            side: BorderSide(
+                              color: isSelected ? Colors.deepOrange : Colors.grey.shade300,
+                            ),
+                            labelStyle: TextStyle(
+                              color: isSelected ? Colors.deepOrange : Colors.grey.shade700,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -93,8 +140,10 @@ class _HomePageState extends State<HomePage> {
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
               if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}'));
-              final list = snapshot.data ?? [];
-              if (list.isEmpty) return const Center(child: Text('No items'));
+              var list = snapshot.data ?? [];
+              // Apply category filter
+              list = _filterByCategory(list);
+              if (list.isEmpty) return const Center(child: Text('No restaurants found'));
               return RefreshIndicator(
                 onRefresh: _refresh,
                 child: ListView.builder(
@@ -115,20 +164,26 @@ class _HomePageState extends State<HomePage> {
                                 width: 80,
                                 height: 80,
                                 color: Colors.grey.shade200,
-                                child: item.imageUrl != null && item.imageUrl!.isNotEmpty
-                                    ? Image.network(item.imageUrl!, fit: BoxFit.cover)
-                                    : const Icon(Icons.image, size: 40, color: Colors.grey),
+                                child: item.pictureId != null && item.pictureId!.isNotEmpty
+                                    ? Image.network('https://restaurant-api.dicoding.dev/images/small/${item.pictureId}', fit: BoxFit.cover)
+                                    : const Icon(Icons.restaurant, size: 40, color: Colors.grey),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                    Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold), maxLines: 2, overflow: TextOverflow.ellipsis),
                                     const SizedBox(height: 6),
-                                    Text(item.menu, style: TextStyle(color: Colors.grey.shade600)),
+                                    Text(item.city ?? '', style: TextStyle(color: Colors.grey.shade600)),
                                     const SizedBox(height: 6),
-                                    Text(item.publishedAt ?? '', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                                    Row(
+                                      children: [
+                                        Icon(Icons.star, size: 14, color: Colors.amber),
+                                        const SizedBox(width: 4),
+                                        Text('${item.rating ?? 0}', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                                      ],
+                                    ),
                                   ],
                                 ),
                               ),
@@ -151,30 +206,12 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _menuButton(String menuValue, String label) {
-    final active = _menu == menuValue;
-    return Expanded(
-      child: OutlinedButton(
-        style: OutlinedButton.styleFrom(
-          backgroundColor: active ? Colors.purple.shade50 : null,
-          side: BorderSide(color: active ? Colors.purple : Colors.grey.shade300),
-        ),
-        onPressed: () {
-          setState(() {
-            _menu = menuValue;
-            _load();
-          });
-        },
-        child: Text(label, style: TextStyle(color: active ? Colors.purple : null)),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Articles'),
+        title: const Text('My Restaurant'),
+        
       ),
       body: _selectedIndex == 0
           ? _buildFeed()
