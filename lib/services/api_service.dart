@@ -26,6 +26,31 @@ class ApiService {
     throw Exception('Failed to load restaurants');
   }
 
+  // Fetch restaurants with categories by fetching detail for each
+  static Future<List<Item>> fetchListWithCategories(String menu) async {
+    print('Fetching restaurants with categories...');
+    final baseList = await fetchList(menu);
+    print('Fetched ${baseList.length} restaurants, now fetching details for categories...');
+    
+    final updatedList = <Item>[];
+    
+    for (int i = 0; i < baseList.length; i++) {
+      try {
+        final item = baseList[i];
+        final detail = await fetchDetail(item.id);
+        updatedList.add(detail);
+        print('  ✓ ${detail.title} - categories: ${detail.categories}');
+      } catch (e) {
+        // If detail fetch fails, use base item
+        updatedList.add(baseList[i]);
+        print('  ✗ Failed to fetch detail for ${baseList[i].title}');
+      }
+    }
+    
+    print('Completed fetching all details. Total: ${updatedList.length}');
+    return updatedList;
+  }
+
   static Future<List<Item>> searchRestaurants(String query) async {
     final url = Uri.parse('$_base/search?q=$query');
     final resp = await http.get(url);
@@ -45,7 +70,6 @@ class ApiService {
       print('Fetching categories from: $url');
       final resp = await http.get(url);
       print('Categories response status: ${resp.statusCode}');
-      print('Categories response body: ${resp.body}');
       
       if (resp.statusCode == 200) {
         final data = json.decode(resp.body);
@@ -65,24 +89,26 @@ class ApiService {
       print('Categories endpoint error: $e');
     }
     
-    // Fallback: Extract categories (cities) from restaurant list
-    print('\n--- Falling back to extract categories from restaurant list ---');
+    // Fallback: Fetch detail for each restaurant to extract categories
+    print('\n--- Falling back to fetch detail for category extraction ---');
     try {
-      print('Fetching restaurants to extract categories (cities)...');
+      print('Fetching restaurants list...');
       final restaurants = await fetchList('restaurants');
-      print('Fetched ${restaurants.length} restaurants for category extraction');
+      print('Fetched ${restaurants.length} restaurants');
       
       final categoriesSet = <String>{};
-      for (var restaurant in restaurants) {
-        // Extract city as category
-        if (restaurant.city != null && restaurant.city!.isNotEmpty) {
-          print('Restaurant "${restaurant.title}" city: ${restaurant.city}');
-          categoriesSet.add(restaurant.city!);
-        }
-        // Also use restaurant categories if they exist
-        if (restaurant.categories.isNotEmpty) {
-          print('Restaurant "${restaurant.title}" categories: ${restaurant.categories}');
-          categoriesSet.addAll(restaurant.categories);
+      
+      // For first 10 restaurants, fetch detail to get categories
+      for (int i = 0; i < restaurants.length && i < 10; i++) {
+        try {
+          print('Fetching detail for: ${restaurants[i].title}');
+          final detail = await fetchDetail(restaurants[i].id);
+          if (detail.categories.isNotEmpty) {
+            print('  Categories: ${detail.categories}');
+            categoriesSet.addAll(detail.categories);
+          }
+        } catch (e) {
+          print('  Error fetching detail: $e');
         }
       }
       
@@ -95,7 +121,7 @@ class ApiService {
         return result;
       }
     } catch (e) {
-      print('Failed to extract categories from restaurants: $e');
+      print('Failed to extract categories from detail: $e');
     }
     
     print('\nReturning default ["All"] category');

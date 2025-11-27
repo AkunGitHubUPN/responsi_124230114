@@ -67,80 +67,120 @@ class _EditProfilePageState extends State<EditProfilePage> {
       setState(() => _isLoading = false);
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Profile')),
+      appBar: AppBar(
+        title: const Text('Edit Profile', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        elevation: 0,
+      ),
+      backgroundColor: Colors.grey.shade50,
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 12),
+              const SizedBox(height: 20),
               Stack(
                 alignment: Alignment.bottomRight,
                 children: [
-                  CircleAvatar(
-                    radius: 60,
-                    backgroundColor: Colors.grey.shade300,
-                    backgroundImage: _photoPath != null ? FileImage(File(_photoPath!)) : null,
-                    child: _photoPath == null
-                        ? const Icon(Icons.person, size: 60, color: Colors.grey)
-                        : null,
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.deepOrange, width: 4),
+                      boxShadow: [BoxShadow(color: Colors.deepOrange.withOpacity(0.3), blurRadius: 15, spreadRadius: 5)],
+                    ),
+                    child: CircleAvatar(
+                      radius: 70,
+                      backgroundColor: Colors.grey.shade300,
+                      backgroundImage: _photoPath != null ? FileImage(File(_photoPath!)) : null,
+                      child: _photoPath == null
+                          ? const Icon(Icons.person, size: 70, color: Colors.grey)
+                          : null,
+                    ),
                   ),
                   GestureDetector(
                     onTap: _pickImage,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.purple.shade400,
+                        color: Colors.deepOrange,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
+                        border: Border.all(color: Colors.white, width: 3),
+                        boxShadow: [BoxShadow(color: Colors.deepOrange.withOpacity(0.4), blurRadius: 8)],
                       ),
-                      padding: const EdgeInsets.all(8),
-                      child: const Icon(Icons.camera_alt, size: 20, color: Colors.white),
+                      padding: const EdgeInsets.all(10),
+                      child: const Icon(Icons.camera_alt, size: 22, color: Colors.white),
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: 36),
+              Text('Edit Profil Anda', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.deepOrange)),
               const SizedBox(height: 24),
               TextField(
                 controller: _nameCtrl,
                 decoration: InputDecoration(
-                  labelText: 'Nama',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  prefixIcon: const Icon(Icons.person_outline),
+                  labelText: 'Nama Lengkap',
+                  prefixIcon: const Icon(Icons.person_outline, color: Colors.deepOrange),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.deepOrange, width: 2),
+                  ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               TextField(
                 controller: _emailCtrl,
                 decoration: InputDecoration(
                   labelText: 'Email',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  prefixIcon: const Icon(Icons.email_outlined),
+                  prefixIcon: const Icon(Icons.email_outlined, color: Colors.deepOrange),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.deepOrange, width: 2),
+                  ),
                 ),
                 keyboardType: TextInputType.emailAddress,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               TextField(
                 controller: _phoneCtrl,
                 decoration: InputDecoration(
                   labelText: 'Nomor Telepon',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  prefixIcon: const Icon(Icons.phone_outlined),
+                  prefixIcon: const Icon(Icons.phone_outlined, color: Colors.deepOrange),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: Colors.deepOrange, width: 2),
+                  ),
                 ),
                 keyboardType: TextInputType.phone,
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 36),
               SizedBox(
                 width: double.infinity,
+                height: 50,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _save,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromRGBO(236, 184, 245, 1),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    backgroundColor: Colors.deepOrange,
+                    foregroundColor: Colors.white,
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
                   child: _isLoading
                       ? const SizedBox(
@@ -148,7 +188,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           width: 20,
                           child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                         )
-                      : const Text('Simpan Perubahan', style: TextStyle(fontSize: 16)),
+                      : const Text('Simpan Perubahan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ),
             ],

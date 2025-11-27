@@ -8,6 +8,8 @@ class Item {
   final String menu;
   final String? address;
   final List<String> categories;
+  final Map<String, dynamic>? menus;
+  final List<Map<String, dynamic>>? customerReviews;
 
   Item({
     required this.id,
@@ -19,17 +21,31 @@ class Item {
     required this.menu,
     this.address,
     this.categories = const [],
+    this.menus,
+    this.customerReviews,
   });  factory Item.fromJson(Map<String, dynamic> json, String menu) {
-    // Parsing categories - since API doesn't have categories field,
-    // we'll extract it from city as category (or leave empty for now)
+    // Parse categories dari API
     List<String> parsedCategories = [];
     
-    // Option 1: Use city as a pseudo-category
-    if (json.containsKey('city') && json['city'] != null) {
-      parsedCategories.add(json['city'].toString());
+    // Check if categories field exists (dari detail endpoint)
+    if (json.containsKey('categories') && json['categories'] is List) {
+      print('DEBUG: Found "categories" field in JSON');
+      parsedCategories = (json['categories'] as List)
+          .map<String>((e) {
+            if (e is Map && e.containsKey('name')) {
+              return e['name']?.toString() ?? '';
+            }
+            return '';
+          })
+          .where((e) => e.isNotEmpty)
+          .toList();
+      print('DEBUG: Parsed categories for "${json['name']}": $parsedCategories');
+    } else {
+      // Fallback: use city as category if no categories field
+      if (json.containsKey('city') && json['city'] != null && json['city'].toString().isNotEmpty) {
+        parsedCategories = [json['city'].toString()];
+      }
     }
-    
-    print('DEBUG: Parsed item "${json['name']}" with categories: $parsedCategories');
 
     return Item(
       id: json['id']?.toString() ?? '',
@@ -41,9 +57,12 @@ class Item {
       rating: json['rating'] is num ? (json['rating'] as num).toDouble() : null,
       menu: menu,
       categories: parsedCategories,
+      menus: json['menus'] as Map<String, dynamic>?,
+      customerReviews: json['customerReviews'] is List 
+          ? List<Map<String, dynamic>>.from(json['customerReviews'] as List)
+          : null,
     );
   }
-
   Map<String, dynamic> toJson() => {
         'id': id,
         'title': title,
@@ -54,5 +73,7 @@ class Item {
         'rating': rating,
         'menu': menu,
         'categories': categories,
+        'menus': menus,
+        'customerReviews': customerReviews,
       };
 }

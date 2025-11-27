@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive/hive.dart';
 import '../models/item.dart';
+import '../models/user.dart';
+import 'profile_service.dart';
 
 class StorageService {
   static const _userKey = 'username';
@@ -50,9 +53,27 @@ class StorageService {
     });
     await prefs.setStringList(_favoritesKey, list);
   }
-
   static Future<bool> isFavorite(String id, String menu) async {
     final fav = await getFavorites();
     return fav.any((f) => f.id == id && f.menu == menu);
+  }
+
+  /// Get full name from Hive database by username
+  static Future<String?> getFullName(String username) async {
+    try {
+      final user = await ProfileService.getUserProfile(username);
+      return user?.name;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// Get user profile from Hive database by username
+  static Future<User?> getUserProfile(String username) async {
+    try {
+      return await ProfileService.getUserProfile(username);
+    } catch (e) {
+      return null;
+    }
   }
 }

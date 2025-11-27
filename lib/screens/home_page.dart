@@ -39,9 +39,8 @@ class _HomePageState extends State<HomePage> {
       }
     });
   }
-
   void _load() {
-    _futureList = ApiService.fetchList('restaurants');
+    _futureList = ApiService.fetchListWithCategories('restaurants');
   }
 
   Future<void> _refresh() async {
@@ -72,24 +71,27 @@ class _HomePageState extends State<HomePage> {
     return restaurants.where((item) {
       return item.categories.any((cat) => cat == _selectedCategory);
     }).toList();
-  }Widget _buildFeed() {
+  }  Widget _buildFeed() {
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(12.0),
+        Container(
+          color: Colors.white,
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Selamat datang ${widget.username}', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 8),
-              Text('Cari Restoran Favorit Anda', style: TextStyle(color: Colors.grey.shade600)),              const SizedBox(height: 12),              // Category Filter Buttons
+              Text('Selamat datang ${widget.username} 👋', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.deepOrange)),
+              const SizedBox(height: 4),
+              Text('Cari Restoran Favorit Anda', style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w600)),
+              const SizedBox(height: 12),
+              // Category Filter Buttons
               FutureBuilder<List<String>>(
                 future: _futureCategories,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const SizedBox(
                       height: 40,
-                      child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                      child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: Colors.deepOrange)),
                     );
                   }
                   if (snapshot.hasError) {
@@ -116,13 +118,14 @@ class _HomePageState extends State<HomePage> {
                               });
                             },
                             backgroundColor: Colors.white,
-                            selectedColor: Colors.deepOrange.shade100,
+                            selectedColor: Colors.deepOrange,
                             side: BorderSide(
                               color: isSelected ? Colors.deepOrange : Colors.grey.shade300,
                             ),
                             labelStyle: TextStyle(
-                              color: isSelected ? Colors.deepOrange : Colors.grey.shade700,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              color: isSelected ? Colors.white : Colors.grey.shade700,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
                             ),
                           ),
                         );
@@ -138,57 +141,85 @@ class _HomePageState extends State<HomePage> {
           child: FutureBuilder<List<Item>>(
             future: _futureList,
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+              if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator(color: Colors.deepOrange));
               if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}'));
               var list = snapshot.data ?? [];
               // Apply category filter
               list = _filterByCategory(list);
-              if (list.isEmpty) return const Center(child: Text('No restaurants found'));
+              if (list.isEmpty) return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.restaurant, size: 80, color: Colors.grey.shade400),
+                    const SizedBox(height: 16),
+                    Text('Restoran tidak ditemukan', style: TextStyle(fontSize: 16, color: Colors.grey.shade600)),
+                  ],
+                ),
+              );
               return RefreshIndicator(
                 onRefresh: _refresh,
+                color: Colors.deepOrange,
                 child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                   itemCount: list.length,
                   itemBuilder: (context, index) {
                     final item = list[index];
                     return Card(
-                      shape: RoundedRectangleBorder(side: BorderSide(color: Colors.grey.shade400)),
+                      elevation: 2,
                       margin: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
                         onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => DetailPage(item: item))).then((_) => _loadFavorites()),
                         child: Padding(
-                          padding: const EdgeInsets.all(8.0),
+                          padding: const EdgeInsets.all(12.0),
                           child: Row(
                             children: [
                               Container(
-                                width: 80,
-                                height: 80,
-                                color: Colors.grey.shade200,
+                                width: 90,
+                                height: 90,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(10),
+                                  color: Colors.grey.shade200,
+                                ),
                                 child: item.pictureId != null && item.pictureId!.isNotEmpty
-                                    ? Image.network('https://restaurant-api.dicoding.dev/images/small/${item.pictureId}', fit: BoxFit.cover)
-                                    : const Icon(Icons.restaurant, size: 40, color: Colors.grey),
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: Image.network('https://restaurant-api.dicoding.dev/images/small/${item.pictureId}', fit: BoxFit.cover),
+                                      )
+                                    : Icon(Icons.restaurant, size: 45, color: Colors.grey.shade400),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold), maxLines: 2, overflow: TextOverflow.ellipsis),
+                                    Text(item.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15), maxLines: 2, overflow: TextOverflow.ellipsis),
                                     const SizedBox(height: 6),
-                                    Text(item.city ?? '', style: TextStyle(color: Colors.grey.shade600)),
+                                    Row(
+                                      children: [
+                                        Icon(Icons.location_on, size: 14, color: Colors.deepOrange),
+                                        const SizedBox(width: 4),
+                                        Text(item.city ?? '', style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                                      ],
+                                    ),
                                     const SizedBox(height: 6),
                                     Row(
                                       children: [
                                         Icon(Icons.star, size: 14, color: Colors.amber),
                                         const SizedBox(width: 4),
-                                        Text('${item.rating ?? 0}', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+                                        Text('${item.rating ?? 0}', style: TextStyle(color: Colors.grey.shade700, fontWeight: FontWeight.w600, fontSize: 13)),
                                       ],
                                     ),
                                   ],
                                 ),
                               ),
                               IconButton(
-                                icon: Icon(_isFav(item) ? Icons.favorite : Icons.favorite_border, color: _isFav(item) ? Colors.red : null),
+                                icon: Icon(
+                                  _isFav(item) ? Icons.favorite : Icons.favorite_border,
+                                  color: _isFav(item) ? Colors.red : Colors.deepOrange,
+                                  size: 20,
+                                ),
                                 onPressed: () => _toggleFavorite(item),
                               )
                             ],
@@ -210,9 +241,10 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Restaurant'),
-        
+        title: const Text('Restaurant App', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        elevation: 0,
       ),
+      backgroundColor: Colors.grey.shade50,
       body: _selectedIndex == 0
           ? _buildFeed()
           : _selectedIndex == 1
@@ -221,10 +253,14 @@ class _HomePageState extends State<HomePage> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: (i) => setState(() => _selectedIndex = i),
+        backgroundColor: Colors.white,
+        selectedItemColor: Colors.deepOrange,
+        unselectedItemColor: Colors.grey.shade500,
+        elevation: 8,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite_border), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Favorite'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
     );
